@@ -23,5 +23,5 @@ UTILS = utils/*
 FILESYSTEM = filesystem/*
 
 main: main.cc $(JPEGFILES) $(UTILS) $(STOREAGE) $(FILESYSTEM)
-	echo "Compiling System, Please Stand By...";
+	echo "Compiling System, Please Stand By..."
 	$(CC) $(FLAGS) -o sfs main.cc $(JPEGFILES) $(UTILS) $(STORAGE) $(FILESYSTEM)

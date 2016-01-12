@@ -9,13 +9,6 @@ int main(int argc, char ** argv){
 	std::string root_dir = "/Users/Mitchell/Pictures/Misc/rec";
 	StorageManager* sm = new StorageManager(root_dir);
 	sm->printStegPieces();
-	int fresh = 0;
-	char formatQ = '\0';
-	std::cout << "Do you want to force a format?: ";
-	std::cin >> formatQ;
-	if(formatQ == 'y'){
-		sm->write(&fresh, 0, 4); sm->write(&fresh, 4, 4);
-	}
 	FileManager *fm = new FileManager(sm);
 	FuseHandler *fh = new FuseHandler(fm);
 	status = fh->start(argc, argv);

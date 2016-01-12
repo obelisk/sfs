@@ -32,9 +32,6 @@ using CryptoPP::CBC_Mode;
 
 #define SUCCESS 0
 #define HIT_DISK_END -2
-#define PASSWORD_HC "applecakebanana"
-#define IV_HC "KAOIVB0ITDSXO4B"				// THis is so bad it's stupid, DO NOT LEAVE THIS WAY
-#define AES_BS 16
 
 // This is the part of the system that handles raw write requests
 // and translates them into writes across the steg pieces
@@ -45,8 +42,6 @@ class StorageManager {
   	std::string path;
   	std::vector<StegFile*> components;
   	size_t size, stegSize;
-  	byte iv[AES_BS];
-  	byte key[AES_BS];
 
   	void getAllStegPieces(bool recurse);
   	void organizeFiles(std::vector<std::string>& files);
@@ -60,17 +55,17 @@ class StorageManager {
   	void startFS();
 
   	// Get the size that all the files are taking on disk
-	size_t getApparentSize();
+	  size_t getApparentSize();
 
-	// Get the size of the virtual steg disk
-	size_t getStegSize();
+	  // Get the size of the virtual steg disk
+	  size_t getStegSize();
 
-	// Output the files that make up the steg disk
-	void printStegPieces();
+	  // Output the files that make up the steg disk
+	  void printStegPieces();
 
-	// Write data, of length length, to location in the steg disk
-	int write(const void* rdata, int location, int length);
+	  // Write data, of length length, to location in the steg disk
+	  int write(const void* rdata, int location, int length);
 
-	// Read data, of length length, from location in the steg disk
-	int read(void* rdata, int location, int length);
+	  // Read data, of length length, from location in the steg disk
+	  int read(void* rdata, int location, int length);
 };

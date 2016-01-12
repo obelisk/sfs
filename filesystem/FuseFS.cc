@@ -36,6 +36,14 @@ static int fs_open(const char *path, struct fuse_file_info *fi){
 	}
 	return -ENOENT;
 }
+static int fs_close(const char *path, struct fuse_file_info *fi){
+	if(FuseHandler::fm->getFileMap().count(std::string(path+1)) == 0){
+		std::cout << "Closing a file (" <<  std::string(path+1) << ") that doesn't exist!\n";
+		return -ENOENT;
+	}
+	FuseHandler::fm->flushFile(std::string(path+1));
+	return 0;
+}
 static int fs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi){
 	FuseHandler::fm->readFromFile(std::string(path+1), buf, offset, size);
 	return size;
@@ -47,7 +55,7 @@ static int fs_write(const char *path, const char *buf, size_t size, off_t offset
 
 static int fs_mknod(const char *path, mode_t mode, dev_t dev){
 	std::cout << "Something tried to call mknod. This might work\n";
-	FuseHandler::fm->createNewFile(path);
+	FuseHandler::fm->createNewFile(path+1);
 	return 0;
 }
 
@@ -68,7 +76,7 @@ static int fs_xattr(const char *path, const char *name, const char *value, size_
 }
 
 static int fs_truncate(const char *path, off_t offset){
-	std::cout << "Something tried to call truncate. This should work\n";
+	std::cout << "Adjust " << path << " to " << offset << " length\n";
 	if(FuseHandler::fm->getFileMap().count(std::string(path+1)) == 0){
 		return -ENOENT;
 	}
@@ -95,6 +103,7 @@ static struct fuse_operations fuse_oper = {
 	.getattr	= fs_getattr,
 	.readdir	= fs_readdir,
 	.open		= fs_open,
+	.release	= fs_close,
 	.read		= fs_read,
 	.write		= fs_write,
 	.mknod		= fs_mknod,
