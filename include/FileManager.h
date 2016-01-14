@@ -12,8 +12,6 @@
 #define MAX_NAME_LEN 128
 #define BLOCK_SIZE 4096
 #define SFS_HEAD_OFF 4
-#define USED_KEY "MGCX"
-#define USED_KEY_LEN 4
 #define ENC_IV_LEN 16
 #define DATA_LENGTH_SIZE 4
 #define DATA_BLOCK_PTR_SIZE 4
@@ -21,7 +19,6 @@
 #define FILE_NAME_OFF DATA_LENGTH_SIZE + ENC_IV_LEN 
 #define FILE_IV_OFF DATA_LENGTH_SIZE
 #define BLOCK_PTR_OFF FILE_NAME_OFF + MAX_NAME_LEN
-#define DATA_BLOCK_H_SIZE 0
 #define DATA_BLOCK_SIZE BLOCK_SIZE - DATA_BLOCK_H_SIZE
 
 // Simple FS implementation, probably should be replaced/improved later

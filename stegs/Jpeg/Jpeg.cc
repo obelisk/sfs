@@ -9,6 +9,8 @@ Jpeg::Jpeg(std::string filepath){
 	stegSizeCalc();
 }
 
+Jpeg::~Jpeg(){}
+
 std::string Jpeg::getName(){
 	return name;
 }

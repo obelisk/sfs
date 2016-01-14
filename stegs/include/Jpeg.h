@@ -7,7 +7,6 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 #include <jpeglib.h>
-//#include <turbojpeg.h>
 #include <jerror.h>
 #include <setjmp.h>
 
@@ -40,11 +39,12 @@ class Jpeg: public StegFile {
   	int stegSize, size;
   	size_t stegSizeCalc();
   public:
-  	Jpeg(std::string filepath);
-	size_t getSize();
-	size_t getStegSize();
-	std::string getName();
-	std::string getStegType();
-	int write(const char* data, int location, int length);
-	int read(char* data, int location, int length);
+    Jpeg(std::string filepath);
+    ~Jpeg();
+	  size_t getSize();
+	  size_t getStegSize();
+	  std::string getName();
+	  std::string getStegType();
+	  int write(const char* data, int location, int length);
+	  int read(char* data, int location, int length);
 };

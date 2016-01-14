@@ -13,21 +13,20 @@ int main(int argc, char ** argv){
 	FuseHandler *fh = new FuseHandler(fm);
 	status = fh->start(argc, argv);
     delete fh;
-    return 0;/**/
+    return 0;
 
-	unsigned int fileSize = 81920;
-	unsigned char buf[fileSize];
+	unsigned char buf[sm->getStegSize()];
 	char * bufPtr = (char*)buf;
-	memset(bufPtr, 0, fileSize);
-	std::cout << "Testing full system read...Hold on to your butts...again...\n";
-	status = sm->read(buf, 0, fileSize);
+	memset(bufPtr, 0, sm->getStegSize());
+	std::cout << "Dumping data from files...\n";
+	status = sm->read(buf, 0, sm->getStegSize());
 	if(status != SUCCESS){
 		std::cout << "Read failed!\n";
 		return 0;
 	}
 	std::ofstream outfile ("/Users/Mitchell/SpiderOak Hive/sfs/extractedfs.bin", std::ofstream::binary);
-	outfile.write (bufPtr, fileSize);
-	outfile.close();/**/
+	outfile.write (bufPtr, sm->getStegSize());
+	outfile.close();
 	
 	return 0;
 }
