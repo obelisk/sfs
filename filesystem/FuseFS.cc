@@ -59,10 +59,18 @@ static int fs_mknod(const char *path, mode_t mode, dev_t dev){
 	return 0;
 }
 
+static int fs_rename(const char *path, const char *npath){
+	if(FuseHandler::fm->getFileMap().count(std::string(path+1)) == 0){
+		std::cout << "Trying to move a file (" <<  std::string(path+1) << ") that doesn't exist!\n";
+		return -ENOENT;
+	}
+	FuseHandler::fm->renameFile(std::string(path+1), std::string(npath+1));
+	return 0;
+}
 
 static int fs_unlink(const char *path){
 	std::cout << "Calling unlink, this is being implemented...\n";
-	FuseHandler::fm->deleteFile(path);
+	FuseHandler::fm->deleteFile(path+1);
 	return 0;
 }
 
@@ -105,6 +113,7 @@ static struct fuse_operations fuse_oper = {
 	.open		= fs_open,
 	.release	= fs_close,
 	.read		= fs_read,
+	.rename		= fs_rename,
 	.write		= fs_write,
 	.mknod		= fs_mknod,
 	.unlink		= fs_unlink,

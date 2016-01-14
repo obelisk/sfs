@@ -18,9 +18,9 @@
 #define DATA_LENGTH_SIZE 4
 #define DATA_BLOCK_PTR_SIZE 4
 #define FILE_SIZE_OFF 0
-#define FILE_NAME_OFF 20
+#define FILE_NAME_OFF DATA_LENGTH_SIZE + ENC_IV_LEN 
 #define FILE_IV_OFF DATA_LENGTH_SIZE
-#define BLOCK_PTR_OFF DATA_LENGTH_SIZE + ENC_IV_LEN + MAX_NAME_LEN
+#define BLOCK_PTR_OFF FILE_NAME_OFF + MAX_NAME_LEN
 #define DATA_BLOCK_H_SIZE 0
 #define DATA_BLOCK_SIZE BLOCK_SIZE - DATA_BLOCK_H_SIZE
 
@@ -57,6 +57,7 @@ typedef struct{
   unsigned int loaded;
   unsigned int size;
   unsigned int location;
+  unsigned int writes;
   std::string data;
   std::string bptr;
 } FileInfo_t;
@@ -94,6 +95,7 @@ class FileManager {
     unsigned int flushFile(std::string path);
     int deleteFile(const char* path);
     int createNewFile(const char* path);
+    int renameFile(std::string path, std::string npath);
     int setFileLength(std::string path, size_t newSize);
     int writeToFile(std::string path, const void* rdata, unsigned int placeInFile, unsigned int length);
     int readFromFile(std::string path, void* rdata, unsigned int placeInFile, unsigned int length);

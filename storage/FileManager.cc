@@ -4,7 +4,7 @@ namespace fs = boost::filesystem;
 
 FileManager::FileManager(StorageManager * rsm){
 	sm = rsm;
-	fskey = "passworddrowssaP";
+	fskey = "passworddrowssap";
 	openFileSystem();
 }
 
@@ -77,6 +77,7 @@ void FileManager::openFileSystem(){
 		fi.location = filePtr;
 		fi.loaded = 0;
 		fi.bptr = ptrBlock;
+		fi.writes = 0;
 		memcpy(&fi.size, &ptrBlock[0], 4);
 		char name[MAX_NAME_LEN+1];
 		memcpy(name, ptrBlock.c_str()+FILE_NAME_OFF, MAX_NAME_LEN);
@@ -194,7 +195,7 @@ unsigned int FileManager::flushFileIndirection(FileInfo_t fi){
 	prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
 	eptr = encryptPtrBlock(fi.bptr, iv);
 	eptr.insert(0, iv);
-	std::cout << "Finishing flushFileIndirection\n";
+	//std::cout << "Finishing flushFileIndirection\n";
 	return sm->write(eptr.c_str(), fi.location, BLOCK_SIZE);
 }
 
@@ -202,6 +203,10 @@ unsigned int FileManager::flushFile(std::string path){
 	std::string iv = fileMap[path].bptr.substr(FILE_IV_OFF, FILE_IV_OFF+AES::BLOCKSIZE);
 	if(fileMap[path].size == 0){
 		std::cout << "No content flush for file of size 0, " << path << "\n";
+		return 0;
+	}
+	if(fileMap[path].writes == 0){
+		std::cout << "No changes to file data, will not flush.\n";
 		return 0;
 	}
 
@@ -229,7 +234,8 @@ unsigned int FileManager::flushFile(std::string path){
 		// Write out that much of our encrypted file to that block
 		sm->write(eblock.c_str()+i*BLOCK_SIZE, file_block_ptr, BLOCK_SIZE);
 	}
-	std::cout << "Finishing flushFile\n";
+	std::cout << "File flushed to disk\n";
+	fileMap[path].writes = 0;
 	return 0;
 }
 
@@ -317,7 +323,7 @@ int FileManager::createNewFile(const char* path){
 	if(newBlockLoc == 0){
 		return -ENOENT;
 	}
-	std::cout << "The indirection block for " << path << " is at " << newBlockLoc << "\n";
+	//std::cout << "The indirection block for " << path << " is at " << newBlockLoc << "\n";
 	// Add the file to the map
 	FileInfo_t fi;
 	fi.location = newBlockLoc;
@@ -328,7 +334,7 @@ int FileManager::createNewFile(const char* path){
 
 	// Add file pointer to mft
 	unsigned int entryLoc = findOpenFSPointer();
-	std::cout << "There is a 0 entry in the filemap at: " << entryLoc << "\n";
+	//std::cout << "There is a 0 entry in the filemap at: " << entryLoc << "\n";
 	memcpy(&memmft[entryLoc], &newBlockLoc, 4);	// This should always work because new c++ standards force contiguous string memory
 
 	// Create an IV for the file (should be 16 bytes)
@@ -401,8 +407,18 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 	return flushFileIndirection(fi);
 }
 
+int FileManager::renameFile(std::string path, std::string npath){
+	fileMap[npath] = fileMap[path];
+	fileMap.erase(path);
+	char zeros[MAX_NAME_LEN];
+	memset(zeros, MAX_NAME_LEN, 0);
+	memcpy(&fileMap[npath].bptr[0]+FILE_NAME_OFF, zeros, MAX_NAME_LEN); // Zero out the name
+	memcpy(&fileMap[npath].bptr[0]+FILE_NAME_OFF, npath.c_str(), MAX_NAME_LEN);
+	flushFileIndirection(fileMap[npath]);
+	return 0;
+}
+
 int FileManager::loadFile(std::string path){
-	//std::cout << "Hit loadFile\n";
 	FileInfo_t fi = getFileInfo(path);
 	unsigned int numBlocks = fi.size/BLOCK_SIZE;
 	numBlocks += (fi.size%BLOCK_SIZE > 0);
@@ -427,9 +443,10 @@ int FileManager::loadFile(std::string path){
 		std::cerr << e.what() << "\n";
 		return -1;
 	}
-	std::cout << "Read in file, trimming down to file size of: " << fi.size << " bytes. Content:\n";
+	//std::cout << "Read in file, trimming down to file size of: " << fi.size << " bytes. Content:\n";
 	fileMap[path].data.resize(fi.size);
-	std::cout << "Finishing loadFile\n";
+	fileMap[path].loaded++;
+	std::cout << "File cached in memory\n";
 	return 0;
 }
 
@@ -444,6 +461,7 @@ int FileManager::writeToFile(std::string path, const void* rdata, unsigned int p
 		setFileLength(path, placeInFile+length);
 	}
 	memcpy(&fileMap[path].data[0]+placeInFile, rdata, length);
+	fileMap[path].writes++;
 	return 0;
 }
 
