@@ -398,11 +398,6 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 	fileMap[path].size = newSize;
 	memcpy(&fi.bptr[0], &newSize, 4);
 	fileMap[path].bptr = fi.bptr;
-
-	std::string encoded;
-	encoded.clear();
-	StringSource((byte*)fileMap[path].bptr.c_str(), fileMap[path].bptr.length(), true, new HexEncoder(new StringSink(encoded)));
-	std::cout << encoded << "\n\n";
 	std::cout << "Finishing setFileLength\n";
 	return flushFileIndirection(fi);
 }
