@@ -78,7 +78,6 @@ void FileManager::openFileSystem(){
 		fi.loaded = 0;
 		fi.bptr = ptrBlock;
 		fi.writes = 0;
-		memcpy(&fi.size, &ptrBlock[0], 4);
 		char name[MAX_NAME_LEN+1];
 		memcpy(name, ptrBlock.c_str()+FILE_NAME_OFF, MAX_NAME_LEN);
 		fileMap[std::string(name, strnlen(name, MAX_NAME_LEN))] = fi;
