@@ -2,9 +2,11 @@
 
 #include "StorageManager.h"
 
+#include <stdlib.h>
+
 #include <iostream>
 #include <map>
-#include <algorithm> 
+#include <algorithm>
 #include <cstring>
 
 #include <boost/filesystem.hpp>

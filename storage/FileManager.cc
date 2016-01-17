@@ -149,14 +149,14 @@ std::string FileManager::decryptMFT(std::string mft){
 
 std::string FileManager::createEncMFT(){
 	CBC_Mode<AES>::Encryption e;
-	AutoSeededRandomPool prng;
 	std::string dmft, emft, encoded;
-	byte iv[16];
+	unsigned char iv[AES::BLOCKSIZE];
 
 	dmft.resize(BLOCK_SIZE - AES::BLOCKSIZE);
 	dmft[0] = 'S'; dmft[1] = 'T'; dmft[2] = 'E'; dmft[3] = 'G';
-	prng.GenerateBlock(iv, sizeof(iv));
-	e.SetKeyWithIV((byte *)fskey.c_str(), fskey.length(), iv);
+	arc4random_stir();
+	arc4random_buf(iv, AES::BLOCKSIZE);
+	e.SetKeyWithIV((byte *)fskey.c_str(), fskey.length(), (byte*)iv);
 
 	try{
 		// Encryption
@@ -171,9 +171,11 @@ std::string FileManager::createEncMFT(){
 unsigned int FileManager::flushMFT(){
 	CBC_Mode<AES>::Encryption e;
 	std::string eblock, iv, emft;
-	AutoSeededRandomPool prng;
+	//AutoSeededRandomPool prng;
 	iv.resize(AES::BLOCKSIZE);
-	prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
+	arc4random_stir();
+	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
+	//prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
 	e.SetKeyWithIV((byte *)fskey.c_str(), fskey.length(), (byte*)iv.c_str());
 
 	try{
@@ -188,10 +190,12 @@ unsigned int FileManager::flushMFT(){
 }
 
 unsigned int FileManager::flushFileIndirection(FileInfo_t fi){
-	AutoSeededRandomPool prng;
+	//AutoSeededRandomPool prng;
 	std::string iv, eptr;
 	iv.resize(AES::BLOCKSIZE);
-	prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
+	arc4random_stir();
+	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
+	//prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
 	eptr = encryptPtrBlock(fi.bptr, iv);
 	eptr.insert(0, iv);
 	//std::cout << "Finishing flushFileIndirection\n";
@@ -337,13 +341,17 @@ int FileManager::createNewFile(const char* path){
 	memcpy(&memmft[entryLoc], &newBlockLoc, 4);	// This should always work because new c++ standards force contiguous string memory
 
 	// Create an IV for the file (should be 16 bytes)
-	AutoSeededRandomPool prng;
-	prng.GenerateBlock((byte*)&fi.bptr[4], AES::BLOCKSIZE);
+	//AutoSeededRandomPool prng;
+	//prng.GenerateBlock((byte*)&fi.bptr[4], AES::BLOCKSIZE);
+	arc4random_stir();
+	arc4random_buf((byte*)&fi.bptr[4], AES::BLOCKSIZE);
 
 	// Create an IV for the pointer block (should be 16 bytes)
 	std::string iv;
 	iv.resize(AES::BLOCKSIZE);
-	prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
+	//prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
+	arc4random_stir();
+	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
 
 	// Copy the name into the buffer
 	strncpy(&fi.bptr[20], path, pathLen);
@@ -368,6 +376,11 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 	int blocksNeeded = newSize/BLOCK_SIZE;
 	blocksNeeded += (newSize%BLOCK_SIZE > 0);
 
+	if(blocksNeeded > free_blocks.size()){
+		std::cout << "A file tried to be resized beyond the capacity of the disk.\n";
+		return -ENOENT;
+	}
+
 	if(sizeChange > 0){	
 		// If we are just expanding the last block but not needing more, just zero out
 		// that part of the last block
@@ -375,11 +388,9 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 			// Might need code here eventually
 		}else{
 			// Add the new blocks sequentially into our ptr table.
-			// THERE IS A BUG HERE IF SOMEONE TRIES TO CREATE A FILE TOO LARGE
-			// IT WILL CORRUPT THE FILE SYSTEM. ADD BOUNDS CHECKING HERE
 			for(unsigned int i=blocksOwned; i < blocksNeeded; ++i){
 				unsigned int freshBlock = claimOpenBlock()*BLOCK_SIZE;
-				std::cout << "Writing a block pointer(" << freshBlock << ") at: " << BLOCK_PTR_OFF+(i*4) << "\n";
+				//std::cout << "Writing a block pointer(" << freshBlock << ") at: " << BLOCK_PTR_OFF+(i*4) << "\n";
 				memcpy(&fi.bptr[0]+BLOCK_PTR_OFF+(i*4), &freshBlock, 4);
 			}
 		}
