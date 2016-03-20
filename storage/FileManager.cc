@@ -9,8 +9,12 @@ FileManager::FileManager(StorageManager * rsm){
 }
 
 FileManager::FileManager(StorageManager * rsm, std::string key){
+	// Key may not have suitable entropy, take a SHA256 hash first
+	std::string hkey;
+	hkey.resize(CryptoPP::SHA256::DIGESTSIZE);
+	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
 	sm = rsm;
-	fskey = key;
+	fskey = hkey.substr(0,16);
 	openFileSystem();
 }
 
@@ -171,11 +175,9 @@ std::string FileManager::createEncMFT(){
 unsigned int FileManager::flushMFT(){
 	CBC_Mode<AES>::Encryption e;
 	std::string eblock, iv, emft;
-	//AutoSeededRandomPool prng;
 	iv.resize(AES::BLOCKSIZE);
 	arc4random_stir();
 	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
-	//prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
 	e.SetKeyWithIV((byte *)fskey.c_str(), fskey.length(), (byte*)iv.c_str());
 
 	try{
@@ -190,15 +192,12 @@ unsigned int FileManager::flushMFT(){
 }
 
 unsigned int FileManager::flushFileIndirection(FileInfo_t fi){
-	//AutoSeededRandomPool prng;
 	std::string iv, eptr;
 	iv.resize(AES::BLOCKSIZE);
 	arc4random_stir();
 	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
-	//prng.GenerateBlock((byte*)&iv[0], AES::BLOCKSIZE);
 	eptr = encryptPtrBlock(fi.bptr, iv);
 	eptr.insert(0, iv);
-	//std::cout << "Finishing flushFileIndirection\n";
 	return sm->write(eptr.c_str(), fi.location, BLOCK_SIZE);
 }
 
@@ -288,10 +287,7 @@ unsigned int FileManager::findUsedFSPointer(unsigned int ptr){
 	return 0;
 }
 
-// Currently, freed blocks are not returned to the system until restart
-// To fix this, the data structure for used and free blocks will
-// probably need to be updated. I'll work on this once file reads and 
-// writes are working.
+// Currently, freed blocks are not returned to the system until restart.
 int FileManager::deleteFile(const char* path){
 	unsigned int pathLen = strnlen(path, MAX_NAME_LEN+1);
 	if(pathLen > MAX_NAME_LEN){
@@ -326,7 +322,7 @@ int FileManager::createNewFile(const char* path){
 	if(newBlockLoc == 0){
 		return -ENOENT;
 	}
-	//std::cout << "The indirection block for " << path << " is at " << newBlockLoc << "\n";
+
 	// Add the file to the map
 	FileInfo_t fi;
 	fi.location = newBlockLoc;
@@ -436,7 +432,7 @@ int FileManager::loadFile(std::string path){
 		memcpy(&file_block_ptr, &fi.bptr[0]+BLOCK_PTR_OFF+(i*4), 4);
 		sm->read(&efile[0]+i*BLOCK_SIZE, file_block_ptr, BLOCK_SIZE);
 	}
-	//std::cout << "Finished encrypted reads\n";
+
 	CBC_Mode< AES >::Decryption d;
 	d.SetKeyWithIV((byte *)fskey.c_str(), fskey.length(), (byte *)fi.bptr.c_str()+4);
 
@@ -448,7 +444,6 @@ int FileManager::loadFile(std::string path){
 		std::cerr << e.what() << "\n";
 		return -1;
 	}
-	//std::cout << "Read in file, trimming down to file size of: " << fi.size << " bytes. Content:\n";
 	fileMap[path].data.resize(fi.size);
 	fileMap[path].loaded++;
 	std::cout << "File cached in memory\n";

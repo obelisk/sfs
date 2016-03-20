@@ -47,10 +47,8 @@
 // USED_KEY         4 bytes
 // Data             BLOCK_SIZE-4
 
-// Note: When a block is owned, it is zeroed out.
-
 // This is the part of the system that builds a simple filesystem
-// to provide to FUSE/other system
+// to provide to FUSE/other systems
 
 typedef struct{
   unsigned int loaded;

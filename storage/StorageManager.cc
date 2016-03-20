@@ -4,6 +4,32 @@ namespace fs = boost::filesystem;
 
 StorageManager::StorageManager(std::string rpath){
 	path = rpath;
+	filepermseed = 0;
+	getAllStegPieces(false);
+	computeSize();
+}
+
+StorageManager::StorageManager(std::string rpath, unsigned long rfilepermseed){
+	path = rpath;
+	filepermseed = rfilepermseed;
+	getAllStegPieces(false);
+	computeSize();
+}
+
+StorageManager::StorageManager(std::string rpath, std::string key){
+	path = rpath;
+
+	std::string hkey;
+	hkey.resize(CryptoPP::SHA256::DIGESTSIZE);
+	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
+	filepermseed = hkey[0];
+	for(unsigned int i = 1; i < CryptoPP::SHA256::DIGESTSIZE; ++i){
+		if(i % 2 == 0){
+			filepermseed *= hkey[i];
+		}else{
+			filepermseed += hkey[i];
+		}
+	}
 	getAllStegPieces(false);
 	computeSize();
 }
@@ -27,7 +53,8 @@ void StorageManager::computeSize(){
 void StorageManager::organizeFiles(std::vector<std::string>& files){
 	// Right now we just use alphabetical order but eventually,
 	// this should be a random order based on a password.
-	std::sort(files.begin(), files.end());
+	//std::sort(files.begin(), files.end());
+	std::shuffle(files.begin(), files.end(), std::default_random_engine(filepermseed));
 }
 
 void StorageManager::getAllStegPieces(bool recurse){

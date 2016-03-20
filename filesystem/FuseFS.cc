@@ -13,7 +13,7 @@ static int fs_getattr(const char *path, struct stat *stbuf){
 		stbuf->st_size = FuseHandler::fm->getFileInfo(std::string(path+1)).size;
 		return 0;
 	}else{
-		std::cout << std::string(path+1) << " DOES NOT EXIST!\n";
+		std::cout << std::string(path+1) << " does not exist.\n";
 		return -ENOENT;
 	}
 }
@@ -34,6 +34,7 @@ static int fs_open(const char *path, struct fuse_file_info *fi){
 	if(FuseHandler::fm->getFileMap().count(std::string(path+1)) > 0){
 		return 0;
 	}
+	std::cout << "Opening a file (" <<  std::string(path+1) << ") that doesn't exist!\n";
 	return -ENOENT;
 }
 static int fs_close(const char *path, struct fuse_file_info *fi){
@@ -54,7 +55,7 @@ static int fs_write(const char *path, const char *buf, size_t size, off_t offset
 }
 
 static int fs_mknod(const char *path, mode_t mode, dev_t dev){
-	std::cout << "Something tried to call mknod. This might work\n";
+	std::cout << "Creating a new file...\n";
 	FuseHandler::fm->createNewFile(path+1);
 	return 0;
 }
@@ -69,22 +70,23 @@ static int fs_rename(const char *path, const char *npath){
 }
 
 static int fs_unlink(const char *path){
-	std::cout << "Calling unlink, this is being implemented...\n";
+	std::cout << "Deleting a file....\n";
 	FuseHandler::fm->deleteFile(path+1);
 	return 0;
 }
 
 static int fs_link(const char *target, const char* name){
+	std::cout << "Filesystem does not currently support links.\n";
 	return 0;
 }
 
 static int fs_xattr(const char *path, const char *name, const char *value, size_t size, int flags, unsigned int what){
-	std::cout << "Something tried to call xattr. This doesn't do anything though.\n";
+	std::cout << "Filesystem does not currently support eXtended ATTRibutes.\n";
 	return 0;
 }
 
 static int fs_truncate(const char *path, off_t offset){
-	std::cout << "Adjust " << path << " to " << offset << " length\n";
+	std::cout << "Adjusting " << path << " to " << offset << " length\n";
 	if(FuseHandler::fm->getFileMap().count(std::string(path+1)) == 0){
 		return -ENOENT;
 	}
@@ -93,17 +95,17 @@ static int fs_truncate(const char *path, off_t offset){
 }
 
 static int fs_chmod(const char *path, mode_t mode){
-	std::cout << "Something tried to call chmod. This doesn't do anything though.\n";
+	std::cout << "Filesystem does not currently support file permissions.\n";
 	return 0;
 }
 
 static int fs_chown(const char *path, uid_t uid, gid_t gid){
-	std::cout << "Something tried to call chown. This doesn't do anything though.\n";
+	std::cout << "Filesystem does not currenctly support file owners.\n";
 	return 0;
 }
 
 static int fs_utime(const char *path, struct utimbuf* utim){
-	std::cout << "Something tried to call utime. This doesn't do anything though.\n";
+	std::cout << "Filesystem does not currently support file timestamps.\n";
 	return 0;
 }
 

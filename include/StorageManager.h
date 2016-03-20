@@ -28,6 +28,7 @@ using CryptoPP::CBC_Mode;
 
 #include <iostream>
 #include <vector>
+#include <random>
 #include <boost/filesystem.hpp>
 
 #define SUCCESS 0
@@ -42,6 +43,7 @@ class StorageManager {
   	std::string path;
   	std::vector<StegFile*> components;
   	size_t size, stegSize;
+    unsigned long filepermseed;
 
   	void getAllStegPieces(bool recurse);
   	void organizeFiles(std::vector<std::string>& files);
@@ -49,6 +51,8 @@ class StorageManager {
   	void initCrypto();
   public:
   	StorageManager(std::string path);
+    StorageManager(std::string path, unsigned long filepermseed);
+    StorageManager(std::string path, std::string key);
   	~StorageManager();
 
   	// Start the FUSEFS filesystem

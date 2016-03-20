@@ -1,4 +1,6 @@
 #include "bitutils.h"
+#include <termios.h>
+#include <unistd.h> 
 
 void reverseBytes(void * rdata, size_t len){
 	int iters = len/2;
@@ -20,17 +22,13 @@ unsigned char getBit(const void* rdata, unsigned int bit_num){
 	return ((data[byte_num] & mask)>>local_bit);
 }
 
-// Incomplete
-char* dataBytesToBits(void* rdata, size_t len){
-	char * expanded = (char*)malloc(len*8);
+void SetStdinEcho(bool enable){
+    struct termios tty;
+    tcgetattr(STDIN_FILENO, &tty);
+    if( !enable )
+        tty.c_lflag &= ~ECHO;
+    else
+        tty.c_lflag |= ECHO;
 
-	// Array loop
-	for(int i=0; i < len; i++){
-		// Byte loop
-		for(int j=0; j < 8; j++){
-
-		}
-	}
-
-	return expanded;
+    (void) tcsetattr(STDIN_FILENO, TCSANOW, &tty);
 }
