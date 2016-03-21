@@ -211,7 +211,9 @@ int StorageManager::write(const void* rdata, int location, int length){
 int StorageManager::flush(){
 	std::cout << "Flushing all cached writes.\n";
 	for (std::vector<StegFile*>::iterator i = components.begin(); i != components.end(); ++i){
-		(*i)->flush();
+		if((*i)->cached_writes.size() > 0){
+			(*i)->flush();
+		}
 	}
 	return 0;
 }

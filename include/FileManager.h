@@ -82,7 +82,6 @@ class FileManager {
     std::string createEncMFT();
     std::string encryptPtrBlock(std::string dblock, std::string iv);
   public:
-  	FileManager(StorageManager* path);
     FileManager(StorageManager* path, std::string key);
     std::map<std::string, FileInfo_t> getFileMap();
     FileInfo_t getFileInfo(std::string path);

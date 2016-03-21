@@ -2,12 +2,6 @@
 
 namespace fs = boost::filesystem;
 
-FileManager::FileManager(StorageManager * rsm){
-	sm = rsm;
-	fskey = "passworddrowssap";
-	openFileSystem();
-}
-
 FileManager::FileManager(StorageManager * rsm, std::string key){
 	// Key may not have suitable entropy, take a SHA256 hash first
 	std::string hkey;
@@ -337,7 +331,6 @@ int FileManager::createNewFile(const char* path){
 
 	// Add file pointer to mft
 	unsigned int entryLoc = findOpenFSPointer();
-	//std::cout << "There is a 0 entry in the filemap at: " << entryLoc << "\n";
 	memcpy(&memmft[entryLoc], &newBlockLoc, 4);	// This should always work because new c++ standards force contiguous string memory
 
 	// Create an IV for the file (should be 16 bytes)

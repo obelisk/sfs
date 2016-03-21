@@ -18,7 +18,7 @@ int main(int argc, char ** argv){
 	std::cout << "\n";
 	StorageManager* sm = new StorageManager(root_dir, password);
 	sm->printStegPieces();
-	FileManager *fm = new FileManager(sm);
+	FileManager *fm = new FileManager(sm, password);
 	FuseHandler *fh = new FuseHandler(fm);
 	status = fh->start(argc, argv);
     delete fh;
