@@ -51,9 +51,9 @@ void StorageManager::computeSize(){
 }
 
 void StorageManager::organizeFiles(std::vector<std::string>& files){
-	// Right now we just use alphabetical order but eventually,
-	// this should be a random order based on a password.
-	//std::sort(files.begin(), files.end());
+	// Shuffle the pieces into a random order using a seed based on
+	// the password. If no password was provided, then the seed is
+	// zero.
 	std::shuffle(files.begin(), files.end(), std::default_random_engine(filepermseed));
 }
 
@@ -112,57 +112,6 @@ size_t StorageManager::getStegSize(){
   return stegSize;
 }
 
-// Write length bytes of data to location in the steg disk
-int StorageManager::write(const void* rdata, int location, int length){
-	const char* data = (char*)rdata;
-	int bytesToGo = location;
-	//Find file
-	int fileIndex = 0;
-	for( auto* component : components){
-		if(bytesToGo > component->getStegSize()){
-			bytesToGo -= component->getStegSize();
-			fileIndex++;
-		}else{
-			break;
-		}
-	}
-	// Check if there is enough space to the end of the disk
-	// Space left in this file
-	size_t spaceLeft = length - (components[fileIndex]->getStegSize()-bytesToGo);
-	for(int i=fileIndex+1; i<components.size() && spaceLeft < length; ++i){
-		spaceLeft += components[i]->getStegSize();
-	}
-
-	if(spaceLeft < length){
-		return HIT_DISK_END;
-	}
-	// Here we can be assued there is enough space in the disk to store the data
-	// Loop through all needed files and do the writes
-
-	//TODO: In N writes all writes but 1 succeed, we cannot undo and the filesystem
-	//will be corrupted. This should be fixed by writing out to new files, then when
-	//they all succeed, move the old file to tmp, move the new ones in, then delete the old
-	//ones. This way, a failed write on one file, will not corrupt the whole disk. Expensive?
-	size_t bytesWritten = 0;
-	int status = 0;
-	while(bytesWritten < length){
-		// How much data can be written into this steg piece
-		int writeLen = std::min(components[fileIndex]->getStegSize()-bytesToGo, length-bytesWritten);
-		status = components[fileIndex]->write(data+bytesWritten, bytesToGo, writeLen);
-		if(status != SUCCESS){
-			// Currently, if we get here, the filesystem is now probably corrupted
-			std::cout << "Writing to " <<  components[fileIndex]->name << " failed.\n";
-			std::cout << "The filesystem may now be corrupt.\nSorry.\n";
-			return status;
-		}
-		fileIndex++;
-		bytesToGo = 0;
-		bytesWritten += writeLen;
-	}
-
-  return SUCCESS;
-}
-
 // Read length bytes of data from location in the steg disk
 int StorageManager::read(void* rdata, int location, int length){
 	char* data = (char*)rdata;
@@ -206,4 +155,63 @@ int StorageManager::read(void* rdata, int location, int length){
 	}
 
  	return SUCCESS;
+}
+
+// Write length bytes of data to location in the steg disk
+int StorageManager::write(const void* rdata, int location, int length){
+	const char* data = (char*)rdata;
+	int bytesToGo = location;
+	//Find file
+	int fileIndex = 0;
+	for(auto* component : components){
+		if(bytesToGo > component->getStegSize()){
+			bytesToGo -= component->getStegSize();
+			fileIndex++;
+		}else{
+			break;
+		}
+	}
+	// Check if there is enough space to the end of the disk
+	// Space left in this file
+	size_t spaceLeft = length - (components[fileIndex]->getStegSize()-bytesToGo);
+	for(int i=fileIndex+1; i<components.size() && spaceLeft < length; ++i){
+		spaceLeft += components[i]->getStegSize();
+	}
+
+	if(spaceLeft < length){
+		return HIT_DISK_END;
+	}
+	// Here we can be assured there is enough space in the disk to store the data
+	// Loop through all needed files and do the writes
+
+	//TODO: In N writes all writes but 1 succeed, we cannot undo and the filesystem
+	//will be corrupted. This should be fixed by writing out to new files, then when
+	//they all succeed, move the old file to tmp, move the new ones in, then delete the old
+	//ones. This way, a failed write on one file, will not corrupt the whole disk. Expensive?
+	size_t bytesWritten = 0;
+	int status = 0;
+	while(bytesWritten < length){
+		// How much data can be written into this steg piece
+		int writeLen = std::min(components[fileIndex]->getStegSize()-bytesToGo, length-bytesWritten);
+		status = components[fileIndex]->write(data+bytesWritten, bytesToGo, writeLen);
+		if(status != SUCCESS){
+			// Currently, if we get here, the filesystem is now probably corrupted
+			std::cout << "Writing to " <<  components[fileIndex]->name << " failed.\n";
+			std::cout << "The filesystem may now be corrupt.\nSorry.\n";
+			return status;
+		}
+		fileIndex++;
+		bytesToGo = 0;
+		bytesWritten += writeLen;
+	}
+
+  return SUCCESS;
+}
+
+int StorageManager::flush(){
+	std::cout << "Flushing all cached writes.\n";
+	for (std::vector<StegFile*>::iterator i = components.begin(); i != components.end(); ++i){
+		(*i)->flush();
+	}
+	return 0;
 }

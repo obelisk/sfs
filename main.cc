@@ -15,6 +15,7 @@ int main(int argc, char ** argv){
 	SetStdinEcho(false);
 	std::cin >> password;
 	SetStdinEcho(true);
+	std::cout << "\n";
 	StorageManager* sm = new StorageManager(root_dir, password);
 	sm->printStegPieces();
 	FileManager *fm = new FileManager(sm);

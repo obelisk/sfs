@@ -48,7 +48,6 @@ class StorageManager {
   	void getAllStegPieces(bool recurse);
   	void organizeFiles(std::vector<std::string>& files);
   	void computeSize();
-  	void initCrypto();
   public:
   	StorageManager(std::string path);
     StorageManager(std::string path, unsigned long filepermseed);
@@ -67,9 +66,13 @@ class StorageManager {
 	  // Output the files that make up the steg disk
 	  void printStegPieces();
 
+    // Read data, of length length, from location in the steg disk
+    int read(void* rdata, int location, int length);
+
 	  // Write data, of length length, to location in the steg disk
 	  int write(const void* rdata, int location, int length);
 
-	  // Read data, of length length, from location in the steg disk
-	  int read(void* rdata, int location, int length);
+    // Writes will not have been sent to disk yet, we need to flush the data to make that happen
+    int flush();
+
 };

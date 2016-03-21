@@ -45,6 +45,7 @@ class Jpeg: public StegFile {
 	  size_t getStegSize();
 	  std::string getName();
 	  std::string getStegType();
+    int read(char* data, int location, int length);
 	  int write(const char* data, int location, int length);
-	  int read(char* data, int location, int length);
+	  int flush();
 };

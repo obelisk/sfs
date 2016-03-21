@@ -42,6 +42,7 @@ void FileManager::openFileSystem(){
 		}
 		std::string emft = createEncMFT();
 		sm->write(emft.c_str(), 0, BLOCK_SIZE);
+		sm->flush();
 		return openFileSystem();	// We've create an encrypted MFT so hopefully now we can restart the method and try again
 	}
 
@@ -188,6 +189,7 @@ unsigned int FileManager::flushMFT(){
 	}
 	emft.insert(0, iv);
 	sm->write(emft.c_str(), 0, BLOCK_SIZE);
+	sm->flush();
 	return 0;
 }
 
@@ -198,7 +200,8 @@ unsigned int FileManager::flushFileIndirection(FileInfo_t fi){
 	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
 	eptr = encryptPtrBlock(fi.bptr, iv);
 	eptr.insert(0, iv);
-	return sm->write(eptr.c_str(), fi.location, BLOCK_SIZE);
+	sm->write(eptr.c_str(), fi.location, BLOCK_SIZE);
+	return sm->flush();
 }
 
 unsigned int FileManager::flushFile(std::string path){
@@ -236,6 +239,7 @@ unsigned int FileManager::flushFile(std::string path){
 		// Write out that much of our encrypted file to that block
 		sm->write(eblock.c_str()+i*BLOCK_SIZE, file_block_ptr, BLOCK_SIZE);
 	}
+	sm->flush();
 	std::cout << "File flushed to disk\n";
 	fileMap[path].writes = 0;
 	return 0;
@@ -355,6 +359,7 @@ int FileManager::createNewFile(const char* path){
 	std::string ePtr = encryptPtrBlock(fi.bptr, iv);
 	ePtr.insert(0, iv);
 	sm->write(ePtr.c_str(), newBlockLoc, BLOCK_SIZE);
+	sm->flush();
 	flushMFT();
 	return 0;
 }
