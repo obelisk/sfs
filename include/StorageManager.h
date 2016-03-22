@@ -1,7 +1,6 @@
 #pragma once
 
 #include "osrng.h"
-using CryptoPP::AutoSeededRandomPool;
 
 #include "cryptlib.h"
 using CryptoPP::Exception;
