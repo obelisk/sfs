@@ -2,14 +2,16 @@ CC = clang++
 
 BASE_FLAGS = -g -std=c++11
 
-# INCLUDE BASE DIRECTORY AND BOOST DIRECTORY FOR HEADERS
-LDFLAGS = -I/usr/local/Cellar/cryptopp/5.6.2/include/cryptopp -I/usr/local/Cellar/boost/1.58.0/include -I/usr/local/include/osxfuse/fuse -I/usr/local/opt/jpeg-turbo/include -Iinclude -Istegs/include
+UNAME := $(shell uname)
 
-# INCLUDE BASE DIRECTORY AND BOOST DIRECTORY FOR LIB FILES
-LLIBFLAGS = -L/usr/local/Cellar/boost/1.58.0/lib -L/usr/local/lib
-
-# SPECIFIY LINK OPTIONS
+ifeq ($(UNAME), Linux)
+LDFLAGS =  -Ilibjpeg -I/usr/include/fuse/ -Iinclude -Istegs/include
+LINKFLAGS = -lcryptopp -lboost_filesystem -lboost_system -ljpeg -lpthread -liconv -lfuse -D_FILE_OFFSET_BITS=64
+else
+LDFLAGS = -I/usr/local/include -I/usr/local/include/osxfuse -Iinclude -Istegs/include
+LLIBFLAGS = -L/usr/local/lib
 LINKFLAGS = -lcryptopp -lboost_filesystem -lboost_system -ljpeg -pthread -liconv -losxfuse -D_DARWIN_USE_64_BIT_INODE -D_FILE_OFFSET_BITS=64
+endif
 
 # FINAL FLAGS -- TO BE USED THROUGHOUT
 FLAGS = $(BASE_FLAGS) $(LDFLAGS) $(LLIBFLAGS) $(LINKFLAGS) 

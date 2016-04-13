@@ -1,25 +1,5 @@
 #pragma once
 
-#include "osrng.h"
-
-#include "cryptlib.h"
-using CryptoPP::Exception;
-
-#include "hex.h"
-using CryptoPP::HexEncoder;
-using CryptoPP::HexDecoder;
-
-#include "filters.h"
-using CryptoPP::StringSink;
-using CryptoPP::StringSource;
-using CryptoPP::StreamTransformationFilter;
-
-#include "aes.h"
-using CryptoPP::AES;
-
-#include "ccm.h"
-using CryptoPP::CBC_Mode;
-
 #include "assert.h"
 
 #include "StegType.h"
@@ -29,6 +9,10 @@ using CryptoPP::CBC_Mode;
 #include <vector>
 #include <random>
 #include <boost/filesystem.hpp>
+
+#include <cryptopp/osrng.h>
+
+#include <cryptopp/cryptlib.h>
 
 #define SUCCESS 0
 #define HIT_DISK_END -2

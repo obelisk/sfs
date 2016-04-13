@@ -299,7 +299,7 @@ int FileManager::deleteFile(const char* path){
 	FileInfo_t fi = fileMap[strpath];
 	// Find the pointer to the indirection block
 	unsigned int indirectionBlockLoc = findUsedFSPointer(fi.location);
-	unsigned int zero = 0;
+	unsigned int zero = 0; 
 	memcpy(&memmft[0]+indirectionBlockLoc, &zero, 4);
 	fileMap.erase(strpath);
 	return flushMFT();

@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include <fuse.h>
-#include <fuse_lowlevel.h>
+#include <fuse/fuse_lowlevel.h>
 
 const std::string info_file = "/README";
 

@@ -120,7 +120,6 @@ static struct fuse_operations fuse_oper = {
 	.mknod		= fs_mknod,
 	.unlink		= fs_unlink,
 	.link		= fs_link,
-	.setxattr 	= fs_xattr,
 	.truncate 	= fs_truncate,
 	.chmod 		= fs_chmod,
 	.chown 		= fs_chown,

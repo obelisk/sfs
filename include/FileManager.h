@@ -3,6 +3,9 @@
 #include "StorageManager.h"
 
 #include <stdlib.h>
+#if __linux__
+#include <bsd/stdlib.h>
+#endif
 
 #include <iostream>
 #include <map>
@@ -10,6 +13,24 @@
 #include <cstring>
 
 #include <boost/filesystem.hpp>
+
+#include <cryptopp/cryptlib.h>
+using CryptoPP::Exception;
+
+#include <cryptopp/hex.h>
+using CryptoPP::HexEncoder;
+using CryptoPP::HexDecoder;
+
+#include <cryptopp/filters.h>
+using CryptoPP::StringSink;
+using CryptoPP::StringSource;
+using CryptoPP::StreamTransformationFilter;
+
+#include <cryptopp/aes.h>
+using CryptoPP::AES;
+
+#include <cryptopp/ccm.h>
+using CryptoPP::CBC_Mode;
 
 #define MAX_NAME_LEN 128
 #define BLOCK_SIZE 4096
