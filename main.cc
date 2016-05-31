@@ -19,8 +19,13 @@ int main(int argc, char ** argv){
 	StorageManager* sm = new StorageManager(root_dir, password);
 	sm->printStegPieces();
 	FileManager *fm = new FileManager(sm, password);
-	FuseHandler *fh = new FuseHandler(fm);
-	status = fh->start(argc, argv);
-    delete fh;
+	if(fm->isReady()){
+		FuseHandler *fh = new FuseHandler(fm);
+		status = fh->start(argc, argv);
+    		delete fh;
+	}else{
+		std::cout << "Filesystem was not ready. Check output for errors.\n";
+		delete fm;
+	}
     return 0;
 }

@@ -24,7 +24,7 @@ StorageManager::StorageManager(std::string rpath, std::string key){
 	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
 	filepermseed = hkey[0];
 	for(unsigned int i = 1; i < CryptoPP::SHA256::DIGESTSIZE; ++i){
-		if(i % 2 == 0){
+		if(hkey[i] % 2 == 0 && hkey[i] != 0){
 			filepermseed *= hkey[i];
 		}else{
 			filepermseed += hkey[i];
@@ -61,7 +61,9 @@ void StorageManager::getAllStegPieces(bool recurse){
 	fs::path p (path);
 	fs::directory_iterator end_itr;
 	std::vector<std::string> files;
-
+	if(!exists(p)){
+		return;
+	}
 	for (fs::directory_iterator itr(p); itr != end_itr; ++itr){
 		// Is directory check, just use 1 level of files for now
 		if (is_regular_file(itr->path())) {
@@ -82,6 +84,10 @@ void StorageManager::getAllStegPieces(bool recurse){
 void StorageManager::printStegPieces(){
 	std::cout << "These files, in this order, make up your sFS\n";
 	std::string name;
+	if(components.size() == 0){
+		std::cout << "There are no (compatible) files with which to make a filesystem\n";
+		return;
+	}
 	for( auto* component : components){
 		name = component->name;
 		if(component->name.length() > 5){

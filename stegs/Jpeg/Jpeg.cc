@@ -6,6 +6,7 @@ Jpeg::Jpeg(std::string filepath){
 	path = filepath;
 	name = fs::path(filepath).filename().string();
 	size = fs::file_size(filepath);
+	cached_writes.clear();
 	stegSizeCalc();
 }
 
@@ -148,15 +149,21 @@ int Jpeg::read(char* data, int location, int length){
 }
 
 int Jpeg::write(const char* data, int location, int length){
+	// This modifies the list so it needs to be protected.
+	list_mutex.lock();
 	// Cache this call
 	char* cdata = (char*)malloc(sizeof(char) * length);
 	memcpy(cdata, data, length);
 	cached_write_t cw = {cdata, length, location};
 	cached_writes.push_back(cw);
+	// We've finished with out modification, unlock.
+	list_mutex.unlock();
 	return 0;
 }
 
 int Jpeg::flush(){
+	// Flushing needs to be protected to prevent double writes, frees, etc.
+	list_mutex.lock();
 	std::cout << "Flushing " << cached_writes.size() << " writes into '" << name << "'.\n";
 	int ret = 0;
 	struct jpeg_decompress_struct cinfo;
@@ -236,5 +243,7 @@ int Jpeg::flush(){
 	jpeg_destroy_decompress(&cinfo);
 	fclose(infile);
 	cached_writes.clear();
+	// All writes are done now, other threads can use this if they want.
+	list_mutex.unlock();
 	return ret;
 }

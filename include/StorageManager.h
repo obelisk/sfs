@@ -8,10 +8,10 @@
 #include <iostream>
 #include <vector>
 #include <random>
+
 #include <boost/filesystem.hpp>
 
 #include <cryptopp/osrng.h>
-
 #include <cryptopp/cryptlib.h>
 
 #define SUCCESS 0

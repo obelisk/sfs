@@ -5,7 +5,10 @@
 
 #include <vector>
 #include <iostream>
+#include <mutex>
+
 #include <boost/filesystem.hpp>
+
 #include <jpeglib.h>
 #include <jerror.h>
 #include <setjmp.h>
@@ -37,6 +40,7 @@ int write_jpeg_file_dct(std::string outname,jpeg_decompress_struct in_cinfo, jvi
 class Jpeg: public StegFile {
   private:
   	int stegSize, size;
+	std::mutex list_mutex;
   	size_t stegSizeCalc();
   public:
     Jpeg(std::string filepath);

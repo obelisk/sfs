@@ -9,7 +9,15 @@ FileManager::FileManager(StorageManager * rsm, std::string key){
 	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
 	sm = rsm;
 	fskey = hkey.substr(0,16);
-	openFileSystem();
+	// Check the StorageManager has non zero space available
+	// The smallest amount of conceivable space needed is three blocks:
+	// MFT, File indirection, One data block
+	if(rsm->getStegSize()/BLOCK_SIZE < 3){
+		std::cout << "There is not enough space to create a filesystem.\n";
+		ready = false;	
+	}else{
+		openFileSystem();
+	}
 }
 
 void FileManager::openFileSystem(){
@@ -106,10 +114,15 @@ void FileManager::openFileSystem(){
 	}
 
 	std::cout << used_blocks.size() << " blocks used, " << free_blocks.size() << " blocks available, " << num_blocks << " blocks total.\n";
+	ready = true;
 }
 
 FileManager::~FileManager(){
 	delete sm; // Delete the StorageManager
+}
+
+bool FileManager::isReady(){
+	return ready;
 }
 
 std::map<std::string, FileInfo_t> FileManager::getFileMap(){
@@ -199,7 +212,13 @@ unsigned int FileManager::flushFileIndirection(FileInfo_t fi){
 }
 
 unsigned int FileManager::flushFile(std::string path){
-	std::string iv = fileMap[path].bptr.substr(FILE_IV_OFF, FILE_IV_OFF+AES::BLOCKSIZE);
+	// std::string iv = fileMap[path].bptr.substr(FILE_IV_OFF, FILE_IV_OFF+AES::BLOCKSIZE);
+	std::string iv, eptr;
+	iv.resize(AES::BLOCKSIZE);
+	arc4random_stir();
+	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
+	memcpy((&fileMap[path].bptr[0])+FILE_IV_OFF, iv.c_str(), ENC_IV_LEN);
+
 	if(fileMap[path].size == 0){
 		std::cout << "No content flush for file of size 0, " << path << "\n";
 		return 0;
@@ -210,7 +229,7 @@ unsigned int FileManager::flushFile(std::string path){
 	}
 
 	std::string paddedContent = fileMap[path].data;
-	unsigned int requiredPad = BLOCK_SIZE - (fileMap[path].size%BLOCK_SIZE);
+	unsigned int requiredPad = (BLOCK_SIZE - (fileMap[path].size%BLOCK_SIZE))%BLOCK_SIZE;
 	paddedContent.resize(fileMap[path].size+requiredPad, 0x0);
 
 	CBC_Mode<AES>::Encryption e;
@@ -220,11 +239,10 @@ unsigned int FileManager::flushFile(std::string path){
 
 	try{
 		// Encryption
-		CryptoPP::StringSource ss( paddedContent, true, new CryptoPP::StreamTransformationFilter(e, new CryptoPP::StringSink( eblock ), CryptoPP::AuthenticatedEncryptionFilter::NO_PADDING ));
+		CryptoPP::StringSource ss(paddedContent, true, new CryptoPP::StreamTransformationFilter(e, new CryptoPP::StringSink( eblock ), CryptoPP::AuthenticatedEncryptionFilter::NO_PADDING));
 	}catch(const CryptoPP::Exception& e){
 		std::cerr << e.what() << std::endl;
 	}
-
 	unsigned int numBlocks = paddedContent.size()/BLOCK_SIZE, file_block_ptr = 0;
 	for(int i = 0; i < numBlocks; ++i){
 		// Find where the data block is
@@ -233,10 +251,10 @@ unsigned int FileManager::flushFile(std::string path){
 		// Write out that much of our encrypted file to that block
 		sm->write(eblock.c_str()+i*BLOCK_SIZE, file_block_ptr, BLOCK_SIZE);
 	}
-	sm->flush();
+	// sm->flush();
 	std::cout << "File flushed to disk\n";
 	fileMap[path].writes = 0;
-	return 0;
+	return flushFileIndirection(fileMap[path]);
 }
 
 std::string FileManager::encryptPtrBlock(std::string dblock, std::string iv){
@@ -251,10 +269,6 @@ std::string FileManager::encryptPtrBlock(std::string dblock, std::string iv){
 		std::cerr << e.what() << std::endl;
 	}
 	return eblock;
-}
-
-unsigned int FileManager::findOpenBlock(){
-	return free_blocks.front();
 }
 
 unsigned int FileManager::claimOpenBlock(){

@@ -82,6 +82,7 @@ typedef struct{
 
 class FileManager {
   private:
+    bool  ready;
     StorageManager * sm;
 
     // A map of filenames (with paths eventually) to memory locations
@@ -91,7 +92,6 @@ class FileManager {
     std::string fskey;
     std::string memmft;
 
-    unsigned int findOpenBlock();
     unsigned int claimOpenBlock();
     unsigned int findOpenFSPointer();
     unsigned int findUsedFSPointer(unsigned int ptr);
@@ -108,6 +108,7 @@ class FileManager {
     FileInfo_t getFileInfo(std::string path);
   	~FileManager();
 
+    bool isReady();
     void openFileSystem();
     unsigned int flushFile(std::string path);
     int deleteFile(const char* path);
