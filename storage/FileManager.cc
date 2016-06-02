@@ -2,13 +2,9 @@
 
 namespace fs = boost::filesystem;
 
-FileManager::FileManager(StorageManager * rsm, std::string key){
-	// Key may not have suitable entropy, take a SHA256 hash first
-	std::string hkey;
-	hkey.resize(CryptoPP::SHA256::DIGESTSIZE);
-	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
+FileManager::FileManager(StorageManager * rsm, std::string key, FileManagerConf_t conf){
+	fskey = calculateKey(key);
 	sm = rsm;
-	fskey = hkey.substr(0,16);
 	// Check the StorageManager has non zero space available
 	// The smallest amount of conceivable space needed is three blocks:
 	// MFT, File indirection, One data block
@@ -18,6 +14,14 @@ FileManager::FileManager(StorageManager * rsm, std::string key){
 	}else{
 		openFileSystem();
 	}
+}
+
+std::string FileManager::calculateKey(std::string key){
+	// Key may not have suitable entropy, take a SHA256 hash first
+	std::string hkey;
+	hkey.resize(CryptoPP::SHA256::DIGESTSIZE);
+	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
+	return hkey.substr(0,16);
 }
 
 void FileManager::openFileSystem(){

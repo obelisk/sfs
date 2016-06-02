@@ -17,24 +17,31 @@
 #define SUCCESS 0
 #define HIT_DISK_END -2
 
+#define DEFAULTS_BLOCKWRITES true
 // This is the part of the system that handles raw write requests
 // and translates them into writes across the steg pieces
 
+typedef struct{
+    bool blockWrites;
+} StorageManagerConf_t;
+
 class StorageManager {
   private:
-  	// The top level folder holding all the steg pieces
+  	size_t size, stegSize;
+        unsigned long filepermseed;
+	
+	StorageManagerConf_t conf;
+  	
+	// The top level folder holding all the steg pieces
   	std::string path;
   	std::vector<StegFile*> components;
-  	size_t size, stegSize;
-    unsigned long filepermseed;
 
   	void getAllStegPieces(bool recurse);
   	void organizeFiles(std::vector<std::string>& files);
   	void computeSize();
   public:
-  	StorageManager(std::string path);
-    StorageManager(std::string path, unsigned long filepermseed);
-    StorageManager(std::string path, std::string key);
+    	StorageManager(std::string path, unsigned long filepermseed = 0, StorageManagerConf_t rconf = {DEFAULTS_BLOCKWRITES});
+    	StorageManager(std::string path, std::string key, StorageManagerConf_t rconf = {DEFAULTS_BLOCKWRITES});
   	~StorageManager();
 
   	// Start the FUSEFS filesystem

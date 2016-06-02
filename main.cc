@@ -1,3 +1,4 @@
+#include "StorageManager.h"
 #include "FileManager.h"
 #include "FuseFS.h"
 
@@ -6,6 +7,7 @@
 
 int main(int argc, char ** argv){
 	int status = 0;
+	char answer;
 	std::string root_dir;
 	std::string password;
 	root_dir.clear();
@@ -16,6 +18,13 @@ int main(int argc, char ** argv){
 	std::cin >> password;
 	SetStdinEcho(true);
 	std::cout << "\n";
+	std::cout << "These are the settings that will be used:\n";
+	std::cout << "\tBlock Writes:\t" << DEFAULTS_BLOCKWRITES << "\n";
+	std::cout << "Continue? (y/n): ";
+	std::cin >> answer;
+	if(answer != 'y'){
+		return 0;
+	}
 	StorageManager* sm = new StorageManager(root_dir, password);
 	sm->printStegPieces();
 	FileManager *fm = new FileManager(sm, password);

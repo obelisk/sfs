@@ -2,23 +2,17 @@
 
 namespace fs = boost::filesystem;
 
-StorageManager::StorageManager(std::string rpath){
-	path = rpath;
-	filepermseed = 0;
-	getAllStegPieces(false);
-	computeSize();
-}
-
-StorageManager::StorageManager(std::string rpath, unsigned long rfilepermseed){
+StorageManager::StorageManager(std::string rpath, unsigned long rfilepermseed, StorageManagerConf_t rconf){
 	path = rpath;
 	filepermseed = rfilepermseed;
+	conf = rconf;
 	getAllStegPieces(false);
 	computeSize();
 }
 
-StorageManager::StorageManager(std::string rpath, std::string key){
+StorageManager::StorageManager(std::string rpath, std::string key, StorageManagerConf_t rconf){
 	path = rpath;
-
+	conf = rconf;
 	std::string hkey;
 	hkey.resize(CryptoPP::SHA256::DIGESTSIZE);
 	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
@@ -165,6 +159,9 @@ int StorageManager::read(void* rdata, int location, int length){
 
 // Write length bytes of data to location in the steg disk
 int StorageManager::write(const void* rdata, int location, int length){
+	if(conf.blockWrites){
+		return -EPERM;
+	}
 	const char* data = (char*)rdata;
 	int bytesToGo = location;
 	//Find file
@@ -215,6 +212,9 @@ int StorageManager::write(const void* rdata, int location, int length){
 }
 
 int StorageManager::flush(){
+	if(conf.blockWrites){
+		return 0;
+	}
 	std::cout << "Flushing all cached writes.\n";
 	for (std::vector<StegFile*>::iterator i = components.begin(); i != components.end(); ++i){
 		if((*i)->cached_writes.size() > 0){

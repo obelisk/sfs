@@ -80,18 +80,23 @@ typedef struct{
   std::string bptr;
 } FileInfo_t;
 
+typedef struct{
+} FileManagerConf_t;
+
 class FileManager {
   private:
     bool  ready;
     StorageManager * sm;
+    FileManagerConf_t conf;
 
-    // A map of filenames (with paths eventually) to memory locations
+    // A map of filenames (with paths eventually) to info structures
     std::map<std::string, FileInfo_t> fileMap;
     std::list<unsigned int> free_blocks;
     std::list<unsigned int> used_blocks;
     std::string fskey;
     std::string memmft;
 
+    void openFileSystem();
     unsigned int claimOpenBlock();
     unsigned int findOpenFSPointer();
     unsigned int findUsedFSPointer(unsigned int ptr);
@@ -101,15 +106,15 @@ class FileManager {
     std::string readFileSystemBlock(unsigned int blockNumber);
     std::string decryptMFT(std::string mft);
     std::string createEncMFT();
+    std::string calculateKey(std::string key);
     std::string encryptPtrBlock(std::string dblock, std::string iv);
   public:
-    FileManager(StorageManager* path, std::string key);
+    FileManager(StorageManager* path, std::string key, FileManagerConf_t rconf = {});
     std::map<std::string, FileInfo_t> getFileMap();
     FileInfo_t getFileInfo(std::string path);
   	~FileManager();
 
     bool isReady();
-    void openFileSystem();
     unsigned int flushFile(std::string path);
     int deleteFile(const char* path);
     int createNewFile(const char* path);
