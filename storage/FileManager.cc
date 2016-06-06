@@ -315,11 +315,25 @@ int FileManager::deleteFile(const char* path){
 		return -ENOENT;
 	}
 	FileInfo_t fi = fileMap[strpath];
+	std::cout << "We are deleting" << path << "\n";
+	std::cout << "There should be " << (fi.size/BLOCK_SIZE) + (fi.size%BLOCK_SIZE > 1) << " data blocks freed, plus 1 for indirection.\n";
+	unsigned int DEBUG_BLOCKS_FREED = 0;
 	// Find the pointer to the indirection block
 	unsigned int indirectionBlockLoc = findUsedFSPointer(fi.location);
 	unsigned int zero = 0; 
+	unsigned int dataBlockPtr = 0;
 	memcpy(&memmft[0]+indirectionBlockLoc, &zero, 4);
+	// Return all the used blocks to the filesystem.
+	free_blocks.push_back(fi.location/BLOCK_SIZE);		// The indirection block
+	DEBUG_BLOCKS_FREED++;
+	memcpy(&dataBlockPtr, fileMap[path].bptr.c_str()+BLOCK_PTR_OFF, 4);	// Get first data block
+	for(unsigned int i = 4; dataBlockPtr != 0; i+=4){
+		free_blocks.push_back(dataBlockPtr/BLOCK_SIZE);
+		DEBUG_BLOCKS_FREED++;
+		memcpy(&dataBlockPtr, fileMap[path].bptr.c_str()+BLOCK_PTR_OFF+i, 4);	// Get all other data blocks
+	}
 	fileMap.erase(strpath);
+	std::cout << "File erase is complete and " << DEBUG_BLOCKS_FREED << " were freed.\n";
 	return flushMFT();
 }
 
@@ -408,9 +422,12 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 		}
 	}else if(sizeChange < 0){
 		// We just need to go through and free and blocks we no longer need
-		unsigned int unneededBlock = 0;
+		unsigned int unneededBlock = 0, dataBlockPtr = 0;
 		for(int i=blocksOwned; i > blocksNeeded; --i){
+			memcpy(&dataBlockPtr, &fi.bptr[BLOCK_PTR_OFF+((i-1)*4)], 4);
 			memcpy(&fi.bptr[BLOCK_PTR_OFF+((i-1)*4)], &unneededBlock, 4);
+			free_blocks.push_back(dataBlockPtr/BLOCK_SIZE);
+			
 		}
 	}else{
 		// No size change

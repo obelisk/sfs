@@ -17,7 +17,7 @@
 #define SUCCESS 0
 #define HIT_DISK_END -2
 
-#define DEFAULTS_BLOCKWRITES true
+#define DEFAULTS_BLOCKWRITES false
 // This is the part of the system that handles raw write requests
 // and translates them into writes across the steg pieces
 
