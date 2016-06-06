@@ -5,7 +5,6 @@ BASE_FLAGS = -g -std=c++11
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Linux)
-CC = clang++-3.6
 LDFLAGS =  -Ilibjpeg -I/usr/include/fuse/ -Iinclude -Istegs/include
 LINKFLAGS = -lcryptopp -lboost_filesystem -lboost_system -ljpeg -lpthread -lbsd -lfuse -D_FILE_OFFSET_BITS=64
 else
