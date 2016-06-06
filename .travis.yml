@@ -10,6 +10,6 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost jpeg osxfuse cryptopp; fi
 
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update                                                        ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libboost-dev libbsd-dev libjpeg-dev libfuse-dev libcrypto++-dev; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libboost-filesystem-dev libbsd-dev libjpeg-dev libfuse-dev libcrypto++-dev; fi
 
-install: make
+script: make
