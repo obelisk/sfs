@@ -53,7 +53,7 @@ size_t Jpeg::stegSizeCalc(){
 	JCOEFPTR blockptr_one;
 	jpeg_component_info* compptr_one;
 
-	// Count how many DCT CoEffs are above 1. We cannot reliably store data in CoEffs that are 1
+	// Count how many DCT CoEffs are above DCT_MIN_V.
 	for (int ci = 0; ci < 3; ci++){
 		compptr_one = cinfo.comp_info + ci;
 		for (int by = 0; by < compptr_one->height_in_blocks; by++){
@@ -61,12 +61,12 @@ size_t Jpeg::stegSizeCalc(){
 			for (int bx = 0; bx < compptr_one->width_in_blocks; bx++){
 				blockptr_one = buffer_one[0][bx];
 				for (int bi = 0; bi < 64; bi++){
-					if(blockptr_one[bi] > 1){
+					if(blockptr_one[bi] > DCT_MIN_V){
 						stegSize++;
 					}
-				}                  
-			}   
-		} 
+				}
+			}
+		}
 	}
 	jpeg_destroy_decompress(&cinfo);
 	fclose(infile);
@@ -123,7 +123,7 @@ int Jpeg::read(char* data, int location, int length){
 			for (int bx = 0; bx < compptr_one->width_in_blocks && !done; bx++){
 				blockptr_one = buffer_one[0][bx];
 				for (int bi = 0; bi < 64 && !done; bi++){
-					if(blockptr_one[bi] > 1){
+					if(blockptr_one[bi] > DCT_MIN_V){
 						if(bitloc > 0){
 							bitloc--;
 						}else if(bitloc == 0){
@@ -211,7 +211,7 @@ int Jpeg::flush(){
 				for (int bx = 0; bx < compptr_one->width_in_blocks && !done; bx++){
 					blockptr_one = buffer_one[0][bx];
 					for (int bi = 0; bi < 64 && !done; bi++){
-						if(blockptr_one[bi] > 1){
+						if(blockptr_one[bi] > DCT_MIN_V){
 							if(bitloc > 0){
 								bitloc--;
 							}else if(bitloc == 0){

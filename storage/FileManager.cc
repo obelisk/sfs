@@ -10,7 +10,7 @@ FileManager::FileManager(StorageManager * rsm, std::string key, FileManagerConf_
 	// MFT, File indirection, One data block
 	if(rsm->getStegSize()/BLOCK_SIZE < 3){
 		std::cout << "There is not enough space to create a filesystem.\n";
-		ready = false;	
+		ready = false;
 	}else{
 		openFileSystem();
 	}
@@ -216,13 +216,6 @@ unsigned int FileManager::flushFileIndirection(FileInfo_t fi){
 }
 
 unsigned int FileManager::flushFile(std::string path){
-	// std::string iv = fileMap[path].bptr.substr(FILE_IV_OFF, FILE_IV_OFF+AES::BLOCKSIZE);
-	std::string iv, eptr;
-	iv.resize(AES::BLOCKSIZE);
-	arc4random_stir();
-	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
-	memcpy((&fileMap[path].bptr[0])+FILE_IV_OFF, iv.c_str(), ENC_IV_LEN);
-
 	if(fileMap[path].size == 0){
 		std::cout << "No content flush for file of size 0, " << path << "\n";
 		return 0;
@@ -231,6 +224,12 @@ unsigned int FileManager::flushFile(std::string path){
 		std::cout << "No changes to file data, will not flush.\n";
 		return 0;
 	}
+	
+	std::string iv, eptr;
+	iv.resize(AES::BLOCKSIZE);
+	arc4random_stir();
+	arc4random_buf((byte*)&iv[0], AES::BLOCKSIZE);
+	memcpy((&fileMap[path].bptr[0])+FILE_IV_OFF, iv.c_str(), ENC_IV_LEN);
 
 	std::string paddedContent = fileMap[path].data;
 	unsigned int requiredPad = (BLOCK_SIZE - (fileMap[path].size%BLOCK_SIZE))%BLOCK_SIZE;
@@ -320,7 +319,7 @@ int FileManager::deleteFile(const char* path){
 	unsigned int DEBUG_BLOCKS_FREED = 0;
 	// Find the pointer to the indirection block
 	unsigned int indirectionBlockLoc = findUsedFSPointer(fi.location);
-	unsigned int zero = 0; 
+	unsigned int zero = 0;
 	unsigned int dataBlockPtr = 0;
 	memcpy(&memmft[0]+indirectionBlockLoc, &zero, 4);
 	// Return all the used blocks to the filesystem.
@@ -407,7 +406,7 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 		return -ENOENT;
 	}
 
-	if(sizeChange > 0){	
+	if(sizeChange > 0){
 		// If we are just expanding the last block but not needing more, just zero out
 		// that part of the last block
 		if(blocksNeeded == blocksOwned){
@@ -427,7 +426,7 @@ int FileManager::setFileLength(std::string path, size_t newSize){
 			memcpy(&dataBlockPtr, &fi.bptr[BLOCK_PTR_OFF+((i-1)*4)], 4);
 			memcpy(&fi.bptr[BLOCK_PTR_OFF+((i-1)*4)], &unneededBlock, 4);
 			free_blocks.push_back(dataBlockPtr/BLOCK_SIZE);
-			
+
 		}
 	}else{
 		// No size change

@@ -13,6 +13,16 @@
 #include <jerror.h>
 #include <setjmp.h>
 
+// This controls how much data you can put in each JPEG, the value cannot be
+// lower than one. The higher the number is, the harder it will be to detect
+// but the less data you'll be able to store. This number must be odd.
+// DCT_MIN_V - vDisk Efficientcy (Steg Space / Total Space)
+//1   - 5%
+//9   - 1.5%
+//19  - 1%
+//49  - 0.5%
+#define DCT_MIN_V 19
+
 struct my_error_mgr {
   struct jpeg_error_mgr pub;	/* "public" fields */
 
