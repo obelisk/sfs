@@ -27,12 +27,12 @@ typedef struct{
 
 class StorageManager {
   private:
+    bool lexical = false;
   	size_t size, stegSize;
-        unsigned long filepermseed;
-	
-	StorageManagerConf_t conf;
+    unsigned long filepermseed;
+	  StorageManagerConf_t conf;
   	
-	// The top level folder holding all the steg pieces
+	  // The top level folder holding all the steg pieces
   	std::string path;
   	std::vector<StegFile*> components;
 
@@ -40,8 +40,8 @@ class StorageManager {
   	void organizeFiles(std::vector<std::string>& files);
   	void computeSize();
   public:
-    	StorageManager(std::string path, unsigned long filepermseed = 0, StorageManagerConf_t rconf = {DEFAULTS_BLOCKWRITES});
-    	StorageManager(std::string path, std::string key, StorageManagerConf_t rconf = {DEFAULTS_BLOCKWRITES});
+    	StorageManager(std::string path, unsigned long filepermseed = 0, bool lex = false, StorageManagerConf_t rconf = {DEFAULTS_BLOCKWRITES});
+    	StorageManager(std::string path, std::string key, bool lex = false, StorageManagerConf_t rconf = {DEFAULTS_BLOCKWRITES});
   	~StorageManager();
 
   	// Start the FUSEFS filesystem

@@ -21,7 +21,7 @@
 //9   - 1.5%
 //19  - 1%
 //49  - 0.5%
-#define DCT_MIN_V 19
+#define DCT_MIN_V 1
 
 struct my_error_mgr {
   struct jpeg_error_mgr pub;	/* "public" fields */

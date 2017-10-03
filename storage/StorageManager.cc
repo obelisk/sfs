@@ -2,7 +2,7 @@
 
 namespace fs = boost::filesystem;
 
-StorageManager::StorageManager(std::string rpath, unsigned long rfilepermseed, StorageManagerConf_t rconf){
+StorageManager::StorageManager(std::string rpath, unsigned long rfilepermseed, bool lex, StorageManagerConf_t rconf){
 	path = rpath;
 	filepermseed = rfilepermseed;
 	conf = rconf;
@@ -10,9 +10,10 @@ StorageManager::StorageManager(std::string rpath, unsigned long rfilepermseed, S
 	computeSize();
 }
 
-StorageManager::StorageManager(std::string rpath, std::string key, StorageManagerConf_t rconf){
+StorageManager::StorageManager(std::string rpath, std::string key, bool lex, StorageManagerConf_t rconf){
 	path = rpath;
 	conf = rconf;
+	lexical = lex;
 	std::string hkey;
 	hkey.resize(CryptoPP::SHA256::DIGESTSIZE);
 	CryptoPP::SHA256().CalculateDigest((byte*)&hkey[0], (byte*)key.c_str(), key.length());
@@ -48,7 +49,11 @@ void StorageManager::organizeFiles(std::vector<std::string>& files){
 	// Shuffle the pieces into a random order using a seed based on
 	// the password. If no password was provided, then the seed is
 	// zero.
-	std::shuffle(files.begin(), files.end(), std::default_random_engine(filepermseed));
+	if (lexical) {
+		std::sort(files.begin(), files.end());
+	} else {
+		std::shuffle(files.begin(), files.end(), std::default_random_engine(filepermseed));
+	}
 }
 
 void StorageManager::getAllStegPieces(bool recurse){
@@ -119,32 +124,32 @@ int StorageManager::read(void* rdata, int location, int length){
 	int bytesToGo = location;
 	//Find file
 	int fileIndex = 0;
-	for( auto* component : components){
-		if(bytesToGo > component->getStegSize()){
+	for (auto* component : components) {
+		if (bytesToGo > component->getStegSize()){
 			bytesToGo -= component->getStegSize();
 			fileIndex++;
-		}else{
+		} else {
 			break;
 		}
 	}
 	// Check if there is enough space to the end of the disk
 	// Space left in this file
 	size_t spaceLeft = length - (components[fileIndex]->getStegSize()-bytesToGo);
-	for(int i=fileIndex+1; i<components.size() && spaceLeft < length; ++i){
+	for (int i=fileIndex+1; i<components.size() && spaceLeft < length; ++i) {
 		spaceLeft += components[i]->getStegSize();
 	}
 
-	if(spaceLeft < length){
+	if (spaceLeft < length) {
 		return HIT_DISK_END;
 	}
 
 	size_t bytesRead = 0;
 	int status = 0;
-	while(bytesRead < length){
+	while (bytesRead < length) {
 		// How much data can be read from this steg piece
 		int readLen = std::min(components[fileIndex]->getStegSize()-bytesToGo, length-bytesRead);
 		status = components[fileIndex]->read(data+bytesRead, bytesToGo, readLen);
-		if(status != SUCCESS){
+		if (status != SUCCESS) {
 			// Currently, if we get here, the filesystem is now probably corrupted
 			std::cout << "Reading from " <<  components[fileIndex]->name << " failed.\n";
 			return status;
